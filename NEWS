@@ -1,0 +1,10 @@
+Rbitcoin 0.5.1
+==============
+* Documentation extended
+
+
+Rbitcoin 0.5
+============
+* First version to publish
+* API public/private calls on mtgox, bitstamp, btce, kraken
+* blockchain account balance

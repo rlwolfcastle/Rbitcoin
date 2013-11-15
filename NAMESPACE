@@ -1,0 +1,8 @@
+export(market.api.query)
+export(market.api.query.bitstamp)
+export(market.api.query.btce)
+export(market.api.query.kraken)
+export(market.api.query.mtgox)
+import(digest)
+import(RCurl)
+import(RJSONIO)
