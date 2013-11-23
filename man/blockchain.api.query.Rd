@@ -1,6 +1,6 @@
 \name{blockchain.api.query}
 \alias{blockchain.api.query}
-\title{blockchain.info API Query}
+\title{Query blockchain.info API}
 \usage{
   blockchain.api.query(method = "addressbalance", address,
     ssl.verify = FALSE, curl.verbose = FALSE, debug = 0)

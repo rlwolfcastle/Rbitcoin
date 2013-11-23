@@ -31,8 +31,7 @@
   API call.
 }
 \description{
-  Send request to kraken market API. Pre-processing of req
-  and post-processing of res are not performed here.
+  Send request to kraken market API.
 }
 \examples{
 \dontrun{
@@ -48,6 +47,9 @@ market.api.query.kraken(url = 'https://api.kraken.com/0/private/Balance',
   \url{https://www.kraken.com/help/api}
 }
 \seealso{
-  \code{\link{market.api.query}}
+  \code{\link{market.api.query}},
+  \code{\link{market.api.query.mtgox}},
+  \code{\link{market.api.query.bitstamp}},
+  \code{\link{market.api.query.btce}}
 }
 

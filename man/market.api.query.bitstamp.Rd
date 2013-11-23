@@ -36,8 +36,7 @@
   API call.
 }
 \description{
-  Send request to bitstamp market API. Pre-processing of
-  req and post-processing of res are not performed here.
+  Send request to bitstamp market API.
 }
 \examples{
 \dontrun{
@@ -54,6 +53,9 @@ market.api.query.bitstamp(url = 'https://www.bitstamp.net/api/balance/',
   \url{https://www.bitstamp.net/api/}
 }
 \seealso{
-  \code{\link{market.api.query}}
+  \code{\link{market.api.query}},
+  \code{\link{market.api.query.mtgox}},
+  \code{\link{market.api.query.btce}},
+  \code{\link{market.api.query.kraken}}
 }
 

@@ -1,37 +1,44 @@
 
-# Rbitcoin - bitcoin markets query in R language ------------------------------------------------------------------
+# Rbitcoin - package level data ------------------------------------------------------------------
 
 require(RJSONIO) #market API communication
 require(RCurl) #market API communication, address_balance query
 require(digest) #market API authorization
-# require(data.table) #API call results unification
+require(data.table) #API call request/result unification
 
-#' @title Rbitcoin
+#' @title Rbitcoin integration
 #'
-#' @description Utilities related to Bitcoin: markets API interface (mtgox,
-#' bitstamp, btce, kraken). Both public and private API calls: ticker, recent
-#' trades, order book, place order and more. Supports HTTP over SSL. Debug
-#' messages of Rbitcoin, debug messages of RCurl. To do not get banned by 
-#' market's API one should handle the antispam process by \code{Sys.sleep(10)}.
+#' @description Utilities related to Bitcoin. Core functionalities are:
+#' \itemize{
+#' \item \code{market.api.query} - launch API query on market's API (\code{mtgox}, \code{bitstamp}, \code{btce}, \code{kraken}). Both public and private API calls supported.
+#' \item \code{market.api.process} - launch API query after pre-process of API request (if required) and post-process API result. Produce unified data structure.
+#' \item \code{blockchain.api.query} - launch API query on blockchain.info interface.
+#' \item support HTTP over SSL.
+#' \item debug messages of \code{Rbitcoin}, debug messages of \code{RCurl}.
+#' }
+#' To do not get banned by market's API user should handle the antispam process by \code{Sys.sleep(10)}.\cr
+#' At the time of writing the most recent market's API version were used:
+#' \itemize{
+#' \item mtgox v2
+#' \item bitstamp v2 (public) / ? (private)
+#' \item btce v2 (public) / "tapi" (private)
+#' \item kraken v0
+#' }
 #' 
-#' Future version will be extended for API \code{request} pre-processing and API 
-#' \code{result} post-processing which will unify the structure of all in/out object for all markets.
+#' BTC donation: \url{bitcoin:15Mb2QcgF3XDMeVn6M7oCG6CQLw4mkedDi}
 #' 
-#' Official bitcointalk thread soon.
-#' 
-#' Please find Index link below to list all Rbitcoin object.
-#'
-#' @seealso \code{\link{market.api.query}}, \code{\link{blockchain.api.query}}
-# @references bitcointalk thread soon \url{}.
-#' @import RJSONIO RCurl digest
+#' @references Bitcointalk official Rbitcoin thread: \url{https://bitcointalk.org/index.php?topic=343504}
+#' @seealso \code{\link{market.api.query}}, \code{\link{blockchain.api.query}}, \code{\link{market.api.process}}
+#' @import RJSONIO RCurl digest data.table
 #' @docType package
 #' @name Rbitcoin
-#' @aliases bitcoin, btc
+#' @aliases bitcoin btc
+#' \url{https://bitcointalk.org/index.php?topic=343504}
 NULL
 
 # blockchain api query  -----------------------------------------------------
 
-#' @title blockchain.info API Query
+#' @title Query blockchain.info API
 #'
 #' @description Query bitcoin related data from blockchain.info.
 #'
@@ -59,9 +66,9 @@ blockchain.api.query <- function(method = 'addressbalance', address, ssl.verify 
                 'addressbalance' = paste('https://blockchain.info/q',method,address,sep='/'),
                 stop(paste0(fun_name,': unsupported method: ',method)))
   #preparing rcurl options
-  useragent <- paste0( #R version and (if) Rbitcoin package version, example: R 3.0.2::Rbitcoin 0.5.1
+  useragent <- paste0(
     'R ',paste(c(R.version$major,R.version$minor),collapse='.'),
-    tryCatch(paste0("::",paste(c(installed.packages()["Rbitcoin",c("Package","Version")]), collapse = ' ')), error = function(e) NULL)
+    "::Rbitcoin ",packageVersion("Rbitcoin")
   )
   if(ssl.verify) curl <- getCurlHandle(ssl.verifypeer = ssl.verify, ssl.verifyhost = ssl.verify, cainfo = 'cacert.pem', verbose = curl.verbose, useragent = useragent)
   else curl <- getCurlHandle(ssl.verifypeer = ssl.verify, ssl.verifyhost = ssl.verify, verbose = curl.verbose, useragent = useragent)
@@ -72,6 +79,123 @@ blockchain.api.query <- function(method = 'addressbalance', address, ssl.verify 
   return(res) 
 }
 
+# api.process -----------------------------------------------------------
+
+#' @name api.dict
+#' @title API dictionary
+#' @description This data set contains a logic of market specific pre processing and post processing of API calls. \code{data(api.dict); api.dict}. If adding new market most of the work need to be performed here on the definition of data manipulation.
+#' @note Many of the errors which will not be handled by standard catching (markets may not return 'result' field etc.) will produce \code{stop(str(x))} to debug shape of returned data. Such errors will be subject to change in future development.
+#' @docType data
+#' @author Jan Gorecki, 2013-11-22
+#' @keywords datasets
+NULL
+
+#' @title Process market API
+#'
+#' @param market character, example: \code{kraken}
+#' @param action character, defined process to get organized data
+#' @param req list with action details (price, amount, etc.) unified across the markets
+#' @param \dots objects to be passed to \code{\link{market.api.query}}
+#' \itemize{
+#' \item auth params: \code{key}, \code{secret}, \code{client_id} (used on bitstamp), \code{method} (used on btce),
+#' \item technical params: \code{ssl.verify}, \code{curl.verbose}, \code{on.error}.
+#' }
+#' @param debug integer. Rbitcoin debug messages if \code{debug > 0}, each subfunction reduce \code{debug} by 1.
+#' @param raw.query.res logical skip post-processing are return only after fromJSON processing.
+#' @param on.market.error expression to be returned on market level error. For R level error check \code{market.api.query}.
+#' @description Processing of API call according to API dictionary \code{data(api.dict); api.dict}. Pre processing of request and post processing of API call results to unified structure across markets. It will result truncation of most (not common across the markets) attributes returned. If you need the full set of data returned by market's API you should use \code{\link{market.api.query}}.
+#' @return Returned value depends on the \code{action} param:
+#' \itemize{
+#' \item \code{'ticker'} returns \code{data.table} object with common attributes,
+#' \item \code{'wallet'} returns \code{data.table} object with common attributes,
+#' \item \code{'order_book'} returns \code{list} with API call level attributes and sub elements \code{[['asks']]} and \code{[['bids']]} as \code{data.table} objects with order book including already calculated cumulative \code{amount} and \code{price}.
+#' }
+#' @note The function is currently in development.\cr Available actions are \code{'ticker'}, \code{'wallet'}, \code{'order_book'}.\cr Market level error handling works only partially as not all markets returns API call status info. For unknown error \code{str(x)} is passed to \code{stop()} function.\cr If you find any bugs please report.
+#' 
+#' @seealso \code{\link{market.api.query}}
+#' @export
+#' @examples
+#' \dontrun{
+#' # get ticker from market
+#' market.api.process(market = 'kraken', action = 'ticker', debug = 10)
+#' # get ticker from all markets and combine
+#' ticker_all <- rbind(
+#'   market.api.process(market = 'mtgox', action = 'ticker'),
+#'   market.api.process(market = 'bitstamp', action = 'ticker'),
+#'   market.api.process(market = 'btce', action = 'ticker'),
+#'   market.api.process(market = 'kraken', action = 'ticker')
+#' )
+#' print(ticker_all)
+#' 
+#' # get wallet from market
+#' market.api.process(market = 'kraken', action = 'wallet', debug = 10)
+#' # get wallet from all markets and combine
+#' wallet_all <- rbind(
+#'   market.api.process(market = 'mtgox', action = 'wallet',
+#'                      key = '', secret = ''),
+#'   market.api.process(market = 'bitstamp', action = 'wallet',
+#'                      client_id = '', key = '', secret = ''),
+#'   market.api.process(market = 'btce', action = 'wallet',
+#'                      method = '', key = '', secret = ''),
+#'   market.api.process(market = 'kraken', action = 'wallet',
+#'                      key = '', secret = '')
+#' )
+#' print(wallet_all)
+#' 
+#' # get order book from market
+#' market.api.process(market = 'kraken', action = 'order_book', debug = 10)
+#' # get order book for all markets and combine
+#' order_book_all <- list(
+#'   'mtgox' = market.api.process(market = 'mtgox', action = 'order_book'),
+#'   'bitstamp' = market.api.process(market = 'bitstamp', action = 'order_book'),
+#'   'btce' = market.api.process(market = 'btce', action = 'order_book'),
+#'   'kraken' = market.api.process(market = 'kraken', action = 'order_book')
+#' )
+#' print(order_book_all[['mtgox']][['bids']])
+#' str(order_book_all)
+#' }
+market.api.process <- function(market, action, req, ..., debug = 0, raw.query.res = FALSE, on.market.error = expression(stop(e))){
+  fun_name <- 'market.api.process'
+  #if(debug > 0) cat('\n',as.character(Sys.time()),': ',fun_name,': launching market.api.process',sep='')
+  if(!(action %in% c('ticker','wallet','order_book'))) stop(paste0(fun_name,': unsupported action - function in development'))
+  #R package check warning prevention:
+  api.dict <- NULL; pre_process <- NULL; post_process <- NULL; catch_market_error <- NULL
+  #load API dictionary
+  data("api.dict", package = "Rbitcoin", envir = environment())
+  #browser()
+  v_market <- market; rm(market) #conflict data.table vars
+  v_action <- action; rm(action)
+  setkey(api.dict,market,action)
+  #preprocess req for market
+  if(!missing(req)){
+    req <- api.dict[market == eval(v_market) & action == eval(v_action),pre_process][[1]](req)
+    if(debug > 0) cat('\n',as.character(Sys.time()),': ',fun_name,': request pre-processed',sep='')
+  }
+  #api.query
+  res <- market.api.query(market = v_market, 
+                          url = api.dict[market == eval(v_market) & action == eval(v_action),url], 
+                          ..., 
+                          debug = debug - 1)
+  if(raw.query.res){
+    if(debug > 0) cat('\n',as.character(Sys.time()),': ',fun_name,': raw.query.res=TRUE, returning raw object fromJSON',sep='')
+    return(res)
+  } 
+  res <- tryCatch(
+    expr = {
+      #catch market's internal errors
+      res <- api.dict[market == eval(v_market) & action == eval(v_action),catch_market_error][[1]](res) #transcode kind of " x[['error']] " to stop()
+      #postprocess res from market
+      res <- api.dict[market == eval(v_market) & action == eval(v_action),post_process][[1]](res)
+      if(debug > 0) cat('\n',as.character(Sys.time()),': ',fun_name,': result post-processed',sep='')
+      res
+    },
+    error = function(e){
+      if(debug > 0) cat('\n',as.character(Sys.time()),': ',fun_name,': error catched, will result eval(on.market.error) param',sep='')
+      eval(on.market.error) #catch the error as you wish
+    })
+  return(res)
+}
+
 # market api query -----------------------------------------------------
 
 #' @title Send request to market API
@@ -79,20 +203,22 @@ blockchain.api.query <- function(method = 'addressbalance', address, ssl.verify 
 #' @description Route a request to particular market function. Also checks if ssl.verify and missing certificate file then downloads it.
 #'
 #' @param market character which identifies market on which we want to send request: mtgox, bitstamp, btce, kraken.
-#' @param ... objects to be passed to API: \code{url}, \code{key}, \code{secret}, \code{req}, \code{client_id} (used on bitstamp), \code{method} (used on btce).
+#' @param \dots objects to be passed to API: \code{url}, \code{key}, \code{secret}, \code{req}, \code{client_id} (used on bitstamp), \code{method} (used on btce).
 #' @param ssl.verify logical flag to use HTTP over SSL, if missing certificate file it will be downloaded.
 #' @param curl.verbose logical flag to display RCurl debug messages.
 #' @param debug integer. Rbitcoin debug messages if \code{debug > 0}, each subfunction reduce \code{debug} by 1.
-#' @param on.error expression to be returned on R level error of market specific function for market.api.query. It does not catch internal market's error returned as valid object.
+#' @param on.error expression to be returned on R level error of market specific function for \code{market.api.query}. It does not catch internal market's error returned as valid object.
 #' @return R object created by fromJSON decoded result from market's API call.
+#' @details To do not spam market's API, use \code{Sys.sleep(10)} between API calls.
 #' @note It is advised to use this function instead of calling market's function directly. If calling directly one should ensure to send any numeric values in non-exponential notation: \code{options(scipen=100)}. 
-#' @seealso \code{\link{market.api.query.mtgox}}, \code{\link{market.api.query.bitstamp}}, \code{\link{market.api.query.btce}}, \code{\link{market.api.query.kraken}}
+#' @seealso \code{\link{market.api.process}}, \code{\link{market.api.query.mtgox}}, \code{\link{market.api.query.bitstamp}}, \code{\link{market.api.query.btce}}, \code{\link{market.api.query.kraken}}
+#' @references API documentation: \url{https://bitbucket.org/nitrous/mtgox-api} \url{https://www.bitstamp.net/api/} \url{https://btc-e.com/api/documentation} \url{https://www.kraken.com/help/api}
 #' @export
 #' @examples
 #' \dontrun{
 #' # ticker
 #' market.api.query(market = 'mtgox', 
-#'                  url = 'https://data.mtgox.com/api/2/BTCUSD/money/ticker_fast')
+#'                  url = 'https://data.mtgox.com/api/2/BTCUSD/money/ticker')
 #' market.api.query(market = 'bitstamp', 
 #'                  url = 'https://www.bitstamp.net/api/ticker/')
 #' market.api.query(market = 'btce', 
@@ -141,6 +267,12 @@ blockchain.api.query <- function(method = 'addressbalance', address, ssl.verify 
 #'                  debug = 10)
 #' market.api.query(market = 'mtgox', 
 #'                  url = 'https://data.mtgox.com/api/2/BTCUSD/money/ticker_fast', 
+#'                  ssl.verify = FALSE,
+#'                  curl.verbose = TRUE, 
+#'                  debug = 10)
+#' market.api.query(market = 'mtgox', 
+#'                  url = 'https://data.mtgox.com/api/2/BTCUSD/money/ticker_fast', 
+#'                  ssl.verify = TRUE,
 #'                  curl.verbose = TRUE, 
 #'                  debug = 10)
 #' }
@@ -174,7 +306,7 @@ market.api.query <- function(market, ..., ssl.verify = FALSE, curl.verbose = FAL
 
 #' @title Send request to mtgox market API
 #'
-#' @description Send request to mtgox market API. Pre-processing of req and post-processing of res are not performed here.
+#' @description Send request to mtgox market API.
 #'
 #' @param url character with url on which query needs to be passed.
 #' @param key character API key used in private API calls.
@@ -184,8 +316,8 @@ market.api.query <- function(market, ..., ssl.verify = FALSE, curl.verbose = FAL
 #' @param curl.verbose logical flag to display RCurl debug messages.
 #' @param debug integer. Rbitcoin debug messages if \code{debug > 0}, each subfunction reduce \code{debug} by 1.
 #' @return R object created by fromJSON decoded result from market's API call.
-#' @seealso \code{\link{market.api.query}}
 #' @references \url{https://bitbucket.org/nitrous/mtgox-api}
+#' @seealso \code{\link{market.api.query}}, \code{\link{market.api.query.bitstamp}}, \code{\link{market.api.query.btce}}, \code{\link{market.api.query.kraken}}
 #' @export
 #' @examples
 #' \dontrun{
@@ -219,9 +351,9 @@ market.api.query.mtgox <- function(url, key, secret, req, ssl.verify = FALSE, cu
   }
   if(debug > 0) cat('\n',as.character(Sys.time()),': ',fun_name,': launching api call with ssl.verify=',ssl.verify,' on url=\'',url,'\'',sep='')
   #preparing rcurl options
-  useragent <- paste0( #R version and (if) Rbitcoin package version, example: R 3.0.2::Rbitcoin 0.5.1
+  useragent <- paste0(
     'R ',paste(c(R.version$major,R.version$minor),collapse='.'),
-    tryCatch(paste0("::",paste(c(installed.packages()["Rbitcoin",c("Package","Version")]), collapse = ' ')), error = function(e) NULL)
+    "::Rbitcoin ",packageVersion("Rbitcoin")
   )
   if(ssl.verify) curl <- getCurlHandle(ssl.verifypeer = ssl.verify, ssl.verifyhost = ssl.verify, cainfo = 'cacert.pem', verbose = curl.verbose, useragent = useragent)
   else curl <- getCurlHandle(ssl.verifypeer = ssl.verify, ssl.verifyhost = ssl.verify, verbose = curl.verbose, useragent = useragent)
@@ -238,7 +370,7 @@ market.api.query.mtgox <- function(url, key, secret, req, ssl.verify = FALSE, cu
 
 #' @title Send request to bitstamp market API
 #'
-#' @description Send request to bitstamp market API. Pre-processing of req and post-processing of res are not performed here.
+#' @description Send request to bitstamp market API.
 #'
 #' @param url character with url on which query needs to be passed.
 #' @param client_id character. Bitstamp market specific parameter used in private API call authorization (check reference for more information).
@@ -249,8 +381,8 @@ market.api.query.mtgox <- function(url, key, secret, req, ssl.verify = FALSE, cu
 #' @param curl.verbose logical flag to display RCurl debug messages.
 #' @param debug integer. Rbitcoin debug messages if \code{debug > 0}, each subfunction reduce \code{debug} by 1.
 #' @return R object created by fromJSON decoded result from market's API call.
-#' @seealso \code{\link{market.api.query}}
 #' @references \url{https://www.bitstamp.net/api/}
+#' @seealso \code{\link{market.api.query}}, \code{\link{market.api.query.mtgox}}, \code{\link{market.api.query.btce}}, \code{\link{market.api.query.kraken}}
 #' @export
 #' @examples
 #' \dontrun{
@@ -283,9 +415,9 @@ market.api.query.bitstamp <- function(url, client_id, key, secret, req, ssl.veri
   }
   if(debug > 0) cat('\n',as.character(Sys.time()),': ',fun_name,': launching api call with ssl.verify=',ssl.verify,' on url=\'',url,'\'',sep='')
   #preparing rcurl options
-  useragent <- paste0( #R version and (if) Rbitcoin package version, example: R 3.0.2::Rbitcoin 0.5.1
+  useragent <- paste0(
     'R ',paste(c(R.version$major,R.version$minor),collapse='.'),
-    tryCatch(paste0("::",paste(c(installed.packages()["Rbitcoin",c("Package","Version")]), collapse = ' ')), error = function(e) NULL)
+    "::Rbitcoin ",packageVersion("Rbitcoin")
   )
   if(ssl.verify) curl <- getCurlHandle(ssl.verifypeer = ssl.verify, ssl.verifyhost = ssl.verify, cainfo = 'cacert.pem', verbose = curl.verbose, useragent = useragent)
   else curl <- getCurlHandle(ssl.verifypeer = ssl.verify, ssl.verifyhost = ssl.verify, verbose = curl.verbose, useragent = useragent)
@@ -302,7 +434,7 @@ market.api.query.bitstamp <- function(url, client_id, key, secret, req, ssl.veri
 
 #' @title Send request to btce market API
 #'
-#' @description Send request to btce market API. Pre-processing of req and post-processing of res are not performed here.
+#' @description Send request to btce market API.
 #'
 #' @param url character with url on which query needs to be passed.
 #' @param method character. Btce market specific parameter used in private API call authorization (check reference for more information).
@@ -313,8 +445,8 @@ market.api.query.bitstamp <- function(url, client_id, key, secret, req, ssl.veri
 #' @param curl.verbose logical flag to display RCurl debug messages.
 #' @param debug integer. Rbitcoin debug messages if \code{debug > 0}, each subfunction reduce \code{debug} by 1.
 #' @return fromJSON decoded result from market's API call.
-#' @seealso \code{\link{market.api.query}}
 #' @references \url{https://btc-e.com/api/documentation}
+#' @seealso \code{\link{market.api.query}}, \code{\link{market.api.query.mtgox}}, \code{\link{market.api.query.bitstamp}}, \code{\link{market.api.query.kraken}}
 #' @export
 #' @examples
 #' \dontrun{
@@ -350,9 +482,9 @@ market.api.query.btce <- function(url, method, key, secret, req, ssl.verify = FA
   }
   if(debug > 0) cat('\n',as.character(Sys.time()),': ',fun_name,': launching api call with ssl.verify=',ssl.verify,' on url=\'',url,'\'',sep='')
   #preparing rcurl options
-  useragent <- paste0( #R version and (if) Rbitcoin package version, example: R 3.0.2::Rbitcoin 0.5.1
+  useragent <- paste0(
     'R ',paste(c(R.version$major,R.version$minor),collapse='.'),
-    tryCatch(paste0("::",paste(c(installed.packages()["Rbitcoin",c("Package","Version")]), collapse = ' ')), error = function(e) NULL)
+    "::Rbitcoin ",packageVersion("Rbitcoin")
   )
   if(ssl.verify) curl <- getCurlHandle(ssl.verifypeer = ssl.verify, ssl.verifyhost = ssl.verify, cainfo = 'cacert.pem', verbose = curl.verbose, useragent = useragent)
   else curl <- getCurlHandle(ssl.verifypeer = ssl.verify, ssl.verifyhost = ssl.verify, verbose = curl.verbose, useragent = useragent)
@@ -369,7 +501,7 @@ market.api.query.btce <- function(url, method, key, secret, req, ssl.verify = FA
 
 #' @title Send request to kraken market API
 #'
-#' @description Send request to kraken market API. Pre-processing of req and post-processing of res are not performed here.
+#' @description Send request to kraken market API.
 #'
 #' @param url character with url on which query needs to be passed.
 #' @param key character API key used in private API calls.
@@ -379,8 +511,8 @@ market.api.query.btce <- function(url, method, key, secret, req, ssl.verify = FA
 #' @param curl.verbose logical flag to display RCurl debug messages.
 #' @param debug integer. Rbitcoin debug messages if \code{debug > 0}, each subfunction reduce \code{debug} by 1.
 #' @return R object created by fromJSON decoded result from market's API call.
-#' @seealso \code{\link{market.api.query}}
 #' @references \url{https://www.kraken.com/help/api}
+#' @seealso \code{\link{market.api.query}}, \code{\link{market.api.query.mtgox}}, \code{\link{market.api.query.bitstamp}}, \code{\link{market.api.query.btce}}
 #' @export
 #' @examples
 #' \dontrun{
@@ -423,9 +555,9 @@ market.api.query.kraken <- function(url, key, secret, req, ssl.verify = FALSE, c
   }
   if(debug > 0) cat('\n',as.character(Sys.time()),': ',fun_name,': launching api call with ssl.verify=',ssl.verify,' on url=\'',url,'\'',sep='')
   #preparing rcurl options
-  useragent <- paste0( #R version and (if) Rbitcoin package version, example: R 3.0.2::Rbitcoin 0.5.1
+  useragent <- paste0(
     'R ',paste(c(R.version$major,R.version$minor),collapse='.'),
-    tryCatch(paste0("::",paste(c(installed.packages()["Rbitcoin",c("Package","Version")]), collapse = ' ')), error = function(e) NULL)
+    "::Rbitcoin ",packageVersion("Rbitcoin")
   )
   if(ssl.verify) curl <- getCurlHandle(ssl.verifypeer = ssl.verify, ssl.verifyhost = ssl.verify, cainfo = 'cacert.pem', verbose = curl.verbose, useragent = useragent)
   else curl <- getCurlHandle(ssl.verifypeer = ssl.verify, ssl.verifyhost = ssl.verify, verbose = curl.verbose, useragent = useragent)

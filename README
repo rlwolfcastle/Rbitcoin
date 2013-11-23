@@ -1,1 +1,1 @@
-Multiple bitcoin markets API, both public and private calls, combined for R use. Rbitcoin unify the private calls authentication process to just run query. In the future version it will also unify all in/ou of API calls which means 'request' pre-processing and 'result' post-processing per market. The package allow interactive communication with bitcoin markets.
+Please read package level documentation, command: ?btc

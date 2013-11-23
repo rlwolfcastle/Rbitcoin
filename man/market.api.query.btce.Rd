@@ -34,8 +34,7 @@
   fromJSON decoded result from market's API call.
 }
 \description{
-  Send request to btce market API. Pre-processing of req
-  and post-processing of res are not performed here.
+  Send request to btce market API.
 }
 \examples{
 \dontrun{
@@ -52,6 +51,9 @@ market.api.query.btce(url = 'https://btc-e.com/tapi',
   \url{https://btc-e.com/api/documentation}
 }
 \seealso{
-  \code{\link{market.api.query}}
+  \code{\link{market.api.query}},
+  \code{\link{market.api.query.mtgox}},
+  \code{\link{market.api.query.bitstamp}},
+  \code{\link{market.api.query.kraken}}
 }
 

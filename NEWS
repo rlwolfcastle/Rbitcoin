@@ -1,3 +1,10 @@
+Rbitcoin 0.6
+==============
+* Added api dictionary for pre & post processing, market error handling
+* Added market.api.process: ticker, wallet, order_book actions available
+* Documentation updates, better examples
+
+
 Rbitcoin 0.5.1
 ==============
 * Documentation extended

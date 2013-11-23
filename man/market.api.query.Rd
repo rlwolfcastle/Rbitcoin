@@ -10,7 +10,7 @@
   \item{market}{character which identifies market on which
   we want to send request: mtgox, bitstamp, btce, kraken.}
 
-  \item{...}{objects to be passed to API: \code{url},
+  \item{\dots}{objects to be passed to API: \code{url},
   \code{key}, \code{secret}, \code{req}, \code{client_id}
   (used on bitstamp), \code{method} (used on btce).}
 
@@ -25,9 +25,9 @@
   1.}
 
   \item{on.error}{expression to be returned on R level
-  error of market specific function for market.api.query.
-  It does not catch internal market's error returned as
-  valid object.}
+  error of market specific function for
+  \code{market.api.query}. It does not catch internal
+  market's error returned as valid object.}
 }
 \value{
   R object created by fromJSON decoded result from market's
@@ -37,6 +37,10 @@
   Route a request to particular market function. Also
   checks if ssl.verify and missing certificate file then
   downloads it.
+}
+\details{
+  To do not spam market's API, use \code{Sys.sleep(10)}
+  between API calls.
 }
 \note{
   It is advised to use this function instead of calling
@@ -48,7 +52,7 @@
 \dontrun{
 # ticker
 market.api.query(market = 'mtgox',
-                 url = 'https://data.mtgox.com/api/2/BTCUSD/money/ticker_fast')
+                 url = 'https://data.mtgox.com/api/2/BTCUSD/money/ticker')
 market.api.query(market = 'bitstamp',
                  url = 'https://www.bitstamp.net/api/ticker/')
 market.api.query(market = 'btce',
@@ -97,11 +101,25 @@ market.api.query(market = 'mtgox',
                  debug = 10)
 market.api.query(market = 'mtgox',
                  url = 'https://data.mtgox.com/api/2/BTCUSD/money/ticker_fast',
+                 ssl.verify = FALSE,
+                 curl.verbose = TRUE,
+                 debug = 10)
+market.api.query(market = 'mtgox',
+                 url = 'https://data.mtgox.com/api/2/BTCUSD/money/ticker_fast',
+                 ssl.verify = TRUE,
                  curl.verbose = TRUE,
                  debug = 10)
 }
 }
+\references{
+  API documentation:
+  \url{https://bitbucket.org/nitrous/mtgox-api}
+  \url{https://www.bitstamp.net/api/}
+  \url{https://btc-e.com/api/documentation}
+  \url{https://www.kraken.com/help/api}
+}
 \seealso{
+  \code{\link{market.api.process}},
   \code{\link{market.api.query.mtgox}},
   \code{\link{market.api.query.bitstamp}},
   \code{\link{market.api.query.btce}},

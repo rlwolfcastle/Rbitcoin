@@ -31,8 +31,7 @@
   API call.
 }
 \description{
-  Send request to mtgox market API. Pre-processing of req
-  and post-processing of res are not performed here.
+  Send request to mtgox market API.
 }
 \examples{
 \dontrun{
@@ -48,6 +47,9 @@ market.api.query.mtgox(url = 'https://data.mtgox.com/api/2/BTCUSD/money/info',
   \url{https://bitbucket.org/nitrous/mtgox-api}
 }
 \seealso{
-  \code{\link{market.api.query}}
+  \code{\link{market.api.query}},
+  \code{\link{market.api.query.bitstamp}},
+  \code{\link{market.api.query.btce}},
+  \code{\link{market.api.query.kraken}}
 }
 
