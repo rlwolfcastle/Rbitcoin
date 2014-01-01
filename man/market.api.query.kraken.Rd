@@ -2,8 +2,8 @@
 \alias{market.api.query.kraken}
 \title{Send request to kraken market API}
 \usage{
-  market.api.query.kraken(url, key, secret, req,
-    ssl.verify = FALSE, curl.verbose = FALSE, debug = 0)
+market.api.query.kraken(url, key, secret, req = list(), ssl.verify = FALSE,
+  curl.verbose = FALSE, debug = 0)
 }
 \arguments{
   \item{url}{character with url on which query needs to be
@@ -27,11 +27,11 @@
   1.}
 }
 \value{
-  R object created by fromJSON decoded result from market's
-  API call.
+R object created by fromJSON decoded result from market's
+API call.
 }
 \description{
-  Send request to kraken market API.
+Send request to kraken market API.
 }
 \examples{
 \dontrun{
@@ -44,12 +44,12 @@ market.api.query.kraken(url = 'https://api.kraken.com/0/private/Balance',
 }
 }
 \references{
-  \url{https://www.kraken.com/help/api}
+\url{https://www.kraken.com/help/api}
 }
 \seealso{
-  \code{\link{market.api.query}},
-  \code{\link{market.api.query.mtgox}},
-  \code{\link{market.api.query.bitstamp}},
-  \code{\link{market.api.query.btce}}
+\code{\link{market.api.query}},
+\code{\link{market.api.query.mtgox}},
+\code{\link{market.api.query.bitstamp}},
+\code{\link{market.api.query.btce}}
 }
 

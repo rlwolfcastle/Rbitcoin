@@ -2,8 +2,8 @@
 \alias{market.api.query.mtgox}
 \title{Send request to mtgox market API}
 \usage{
-  market.api.query.mtgox(url, key, secret, req,
-    ssl.verify = FALSE, curl.verbose = FALSE, debug = 0)
+market.api.query.mtgox(url, key, secret, req = list(), ssl.verify = FALSE,
+  curl.verbose = FALSE, debug = 0)
 }
 \arguments{
   \item{url}{character with url on which query needs to be
@@ -27,11 +27,11 @@
   1.}
 }
 \value{
-  R object created by fromJSON decoded result from market's
-  API call.
+R object created by fromJSON decoded result from market's
+API call.
 }
 \description{
-  Send request to mtgox market API.
+Send request to mtgox market API.
 }
 \examples{
 \dontrun{
@@ -44,12 +44,12 @@ market.api.query.mtgox(url = 'https://data.mtgox.com/api/2/BTCUSD/money/info',
 }
 }
 \references{
-  \url{https://bitbucket.org/nitrous/mtgox-api}
+\url{https://bitbucket.org/nitrous/mtgox-api}
 }
 \seealso{
-  \code{\link{market.api.query}},
-  \code{\link{market.api.query.bitstamp}},
-  \code{\link{market.api.query.btce}},
-  \code{\link{market.api.query.kraken}}
+\code{\link{market.api.query}},
+\code{\link{market.api.query.bitstamp}},
+\code{\link{market.api.query.btce}},
+\code{\link{market.api.query.kraken}}
 }
 

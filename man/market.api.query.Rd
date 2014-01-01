@@ -2,9 +2,8 @@
 \alias{market.api.query}
 \title{Send request to market API}
 \usage{
-  market.api.query(market, ..., ssl.verify = FALSE,
-    curl.verbose = FALSE, debug = 0,
-    on.error = expression(stop(e)))
+market.api.query(market, ..., ssl.verify = FALSE, curl.verbose = FALSE,
+  debug = 0, on.error = expression(stop(e[["message"]], call. = FALSE)))
 }
 \arguments{
   \item{market}{character which identifies market on which
@@ -12,10 +11,11 @@
 
   \item{\dots}{objects to be passed to API: \code{url},
   \code{key}, \code{secret}, \code{req}, \code{client_id}
-  (used on bitstamp), \code{method} (used on btce).}
+  (used on bitstamp).}
 
   \item{ssl.verify}{logical flag to use HTTP over SSL, if
-  missing certificate file it will be downloaded.}
+  missing certificate file it will be downloaded from
+  \code{http://curl.haxx.se/ca/cacert.pem}.}
 
   \item{curl.verbose}{logical flag to display RCurl debug
   messages.}
@@ -24,29 +24,28 @@
   \code{debug > 0}, each subfunction reduce \code{debug} by
   1.}
 
-  \item{on.error}{expression to be returned on R level
-  error of market specific function for
-  \code{market.api.query}. It does not catch internal
-  market's error returned as valid object.}
+  \item{on.error}{expression to be evaluated on R level
+  error of market specific function. It does not catch
+  internal market's error returned as valid object.}
 }
 \value{
-  R object created by fromJSON decoded result from market's
-  API call.
+R object created by fromJSON decoded result from market's
+API call.
 }
 \description{
-  Route a request to particular market function. Also
-  checks if ssl.verify and missing certificate file then
-  downloads it.
+Route a request to particular market function. Also checks
+if ssl.verify and missing certificate file then downloads
+it.
 }
 \details{
-  To do not spam market's API, use \code{Sys.sleep(10)}
-  between API calls.
+To do not spam market's API, use \code{Sys.sleep(10)}
+between API calls.
 }
 \note{
-  It is advised to use this function instead of calling
-  market's function directly. If calling directly one
-  should ensure to send any numeric values in
-  non-exponential notation: \code{options(scipen=100)}.
+It is advised to use this function instead of calling
+market's function directly. If calling directly one should
+ensure to send any numeric values in non-exponential
+notation: \code{options(scipen=100)}.
 }
 \examples{
 \dontrun{
@@ -71,7 +70,7 @@ market.api.query(market = 'bitstamp',
                  secret = '')
 market.api.query(market = 'btce',
                  url = 'https://btc-e.com/tapi',
-                 method = 'getInfo',
+                 req = list(method = 'getInfo'),
                  key = '',
                  secret = '')
 market.api.query(market = 'kraken',
@@ -112,17 +111,17 @@ market.api.query(market = 'mtgox',
 }
 }
 \references{
-  API documentation:
-  \url{https://bitbucket.org/nitrous/mtgox-api}
-  \url{https://www.bitstamp.net/api/}
-  \url{https://btc-e.com/api/documentation}
-  \url{https://www.kraken.com/help/api}
+API documentation:
+\url{https://bitbucket.org/nitrous/mtgox-api},
+\url{https://www.bitstamp.net/api/},
+\url{https://btc-e.com/api/documentation},
+\url{https://www.kraken.com/help/api}
 }
 \seealso{
-  \code{\link{market.api.process}},
-  \code{\link{market.api.query.mtgox}},
-  \code{\link{market.api.query.bitstamp}},
-  \code{\link{market.api.query.btce}},
-  \code{\link{market.api.query.kraken}}
+\code{\link{market.api.process}},
+\code{\link{market.api.query.mtgox}},
+\code{\link{market.api.query.bitstamp}},
+\code{\link{market.api.query.btce}},
+\code{\link{market.api.query.kraken}}
 }
 

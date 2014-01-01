@@ -2,9 +2,8 @@
 \alias{market.api.query.bitstamp}
 \title{Send request to bitstamp market API}
 \usage{
-  market.api.query.bitstamp(url, client_id, key, secret,
-    req, ssl.verify = FALSE, curl.verbose = FALSE,
-    debug = 0)
+market.api.query.bitstamp(url, client_id, key, secret, req = list(),
+  ssl.verify = FALSE, curl.verbose = FALSE, debug = 0)
 }
 \arguments{
   \item{url}{character with url on which query needs to be
@@ -32,11 +31,12 @@
   1.}
 }
 \value{
-  R object created by fromJSON decoded result from market's
-  API call.
+R object created by fromJSON decoded result from market's
+API call. Cancel order is an exception handled by hardcode,
+as bitstamp will not return json format for that method.
 }
 \description{
-  Send request to bitstamp market API.
+Send request to bitstamp market API.
 }
 \examples{
 \dontrun{
@@ -50,12 +50,12 @@ market.api.query.bitstamp(url = 'https://www.bitstamp.net/api/balance/',
 }
 }
 \references{
-  \url{https://www.bitstamp.net/api/}
+\url{https://www.bitstamp.net/api/}
 }
 \seealso{
-  \code{\link{market.api.query}},
-  \code{\link{market.api.query.mtgox}},
-  \code{\link{market.api.query.btce}},
-  \code{\link{market.api.query.kraken}}
+\code{\link{market.api.query}},
+\code{\link{market.api.query.mtgox}},
+\code{\link{market.api.query.btce}},
+\code{\link{market.api.query.kraken}}
 }
 
