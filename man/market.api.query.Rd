@@ -2,8 +2,8 @@
 \alias{market.api.query}
 \title{Send request to market API}
 \usage{
-market.api.query(market, ..., ssl.verify = FALSE, curl.verbose = FALSE,
-  debug = 0, on.error = expression(stop(e[["message"]], call. = FALSE)))
+market.api.query(market, ..., verbose = getOption("Rbitcoin.verbose"),
+  on.error = expression(stop(e[["message"]], call. = FALSE)))
 }
 \arguments{
   \item{market}{character which identifies market on which
@@ -13,16 +13,11 @@ market.api.query(market, ..., ssl.verify = FALSE, curl.verbose = FALSE,
   \code{key}, \code{secret}, \code{req}, \code{client_id}
   (used on bitstamp).}
 
-  \item{ssl.verify}{logical flag to use HTTP over SSL, if
-  missing certificate file it will be downloaded from
-  \code{http://curl.haxx.se/ca/cacert.pem}.}
-
-  \item{curl.verbose}{logical flag to display RCurl debug
-  messages.}
-
-  \item{debug}{integer. Rbitcoin debug messages if
-  \code{debug > 0}, each subfunction reduce \code{debug} by
-  1.}
+  \item{verbose}{integer. Rbitcoin processing messages,
+  print to console if \code{verbose > 0}, each subfunction
+  reduce \code{verbose} by 1. If missing then
+  \code{getOption("Rbitcoin.verbose")} is used, by default
+  \code{0}.}
 
   \item{on.error}{expression to be evaluated on R level
   error of market specific function. It does not catch
@@ -33,9 +28,7 @@ R object created by fromJSON decoded result from market's
 API call.
 }
 \description{
-Route a request to particular market function. Also checks
-if ssl.verify and missing certificate file then downloads
-it.
+Route a request to particular market function.
 }
 \details{
 To do not spam market's API, use \code{Sys.sleep(10)}
@@ -61,53 +54,42 @@ market.api.query(market = 'kraken',
 # wallet
 market.api.query(market = 'mtgox',
                  url = 'https://data.mtgox.com/api/2/BTCUSD/money/info',
-                 key = '',
-                 secret = '')
+                 key = '', secret = '')
 market.api.query(market = 'bitstamp',
                  url = 'https://www.bitstamp.net/api/balance/',
-                 client_id = '',
-                 key = '',
-                 secret = '')
+                 client_id = '', # bitstamp specific
+                 key = '', secret = '')
 market.api.query(market = 'btce',
                  url = 'https://btc-e.com/tapi',
                  req = list(method = 'getInfo'),
-                 key = '',
-                 secret = '')
+                 key = '', secret = '')
 market.api.query(market = 'kraken',
                  url = 'https://api.kraken.com/0/private/Balance',
-                 key = '',
-                 secret = '')
+                 key = '', secret = '')
 # order book
-market.api.query(market = 'mtgox',
-                 url = 'https://data.mtgox.com/api/2/BTCUSD/money/depth/fetch')
-# place order
-market.api.query(market = 'mtgox',
-                 url = 'https://data.mtgox.com/api/2/BTCUSD/money/order/add',
-                 key = '',
-                 secret = '',
-                 req = list(type = 'ask', #sell
-                            amount_int = trunc(0.1 * 100000000), #0.1 btc
-                            price_int = trunc(1000 * 100000))) #1000 usd
+market.api.query(market = 'kraken',
+                 url = 'https://api.kraken.com/0/public/Depth?pair=XXBTZEUR')
 # open orders
-market.api.query(market = 'mtgox',
-                 url = 'https://data.mtgox.com/api/2/BTCUSD/money/orders',
-                 key = '',
-                 secret = '')
-# debugging
-market.api.query(market = 'mtgox',
-                 url = 'https://data.mtgox.com/api/2/BTCUSD/money/ticker_fast',
-                 curl.verbose = FALSE,
-                 debug = 10)
-market.api.query(market = 'mtgox',
-                 url = 'https://data.mtgox.com/api/2/BTCUSD/money/ticker_fast',
-                 ssl.verify = FALSE,
-                 curl.verbose = TRUE,
-                 debug = 10)
-market.api.query(market = 'mtgox',
-                 url = 'https://data.mtgox.com/api/2/BTCUSD/money/ticker_fast',
-                 ssl.verify = TRUE,
-                 curl.verbose = TRUE,
-                 debug = 10)
+market.api.query(market = 'kraken',
+                 url = 'https://api.kraken.com/0/private/OpenOrders',
+                 key = '', secret = '')
+# place order
+market.api.query(market = 'kraken',
+                 url = 'https://api.kraken.com/0/private/AddOrder',
+                 key = '', secret = '',
+                 req = list(pair = 'XXBTZEUR',
+                            type = 'sell',
+                            ordertype = 'limit',
+                            price = 1200, # 1200 eur
+                            volume = 0.1)) # 0.1 btc
+# cancel order
+market.api.query(market = 'kraken',
+                 url = 'https://api.kraken.com/0/private/CancelOrder',
+                 key = '', secret = '',
+                 req = list(txid = 'id_from_open_orders'))
+# trades
+market.api.query(market = 'kraken',
+                 url = 'https://api.kraken.com/0/public/Trades?pair=XXBTZEUR')
 }
 }
 \references{

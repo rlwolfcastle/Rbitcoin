@@ -1,3 +1,16 @@
+Rbitcoin 0.8.5
+==============
+* some technical params (curl.verbose, ssl.verify, debug) removed from FUNs args. They are available as 'options'.
+* documentation update
+* workaround for data.table setkeyv issue (v1.8.11 - v1.9.2) added
+* timezone of POSIX objects used by package changed from GMT to UTC
+* api.dict update/fixes:
+  * added kraken BTCLTC and btce NMCBTC to api.dict
+  * some business exceptions handled
+  * kraken ticker ask-bid swap fixed
+  * incorrect base-quote headers swap fixed on some entries
+
+  
 Rbitcoin 0.8
 ==============
 * market.api.process: added currency_pair param (non backwards compatible!)

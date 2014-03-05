@@ -6,25 +6,28 @@
 data(api.dict)
 }
 \description{
-This data set contains dictionary (data.table object) for
-market specific url, internal market's method name, logic
-of pre-process, post-process, markets error catch. Run
+This data set contains dictionary (\code{\link{data.table}}
+object) for \code{\link{market.api.process}} function which
+perform pre-process API call request, post-process API call
+results and catch market level errors. Still there is
+function \code{\link{market.api.query}} that do not require
+any dictionary and can operate on any currency pairs. Run
 \code{data(api.dict); api.dict} to print built-in
 dictionary. Granularity of data is \code{c(market, base,
 quote, action)}. This dictionary can be edited/extended by
 user for new currency pairs.\cr Currently supported
 currency pairs: \itemize{ \item \code{mtgox: BTCUSD} \item
-\code{bitstamp: BTCUSD} \item \code{btce: LTCUSD, LTCBTC}
-\item \code{kraken: BTCEUR, LTCEUR} }
+\code{bitstamp: BTCUSD} \item \code{btce: LTCUSD, LTCBTC,
+NMCBTC} \item \code{kraken: BTCEUR, LTCEUR, BTCLTC} }
 }
 \note{
-Do not use \code{api.dict} from untrusted source or at
-least read whole it's code to ensure it is safe! The api
-dictionary was not fully tested, please follow the
-examples, if you find any bugs please report.
+Do not use \code{api.dict} from untrusted source or read
+whole it's code to ensure it is safe! The api dictionary
+was not fully tested, please follow the examples, if you
+find any bugs please report.
 }
 \author{
-Jan Gorecki, 2013-12-31
+Jan Gorecki, 2014-03-05
 }
 \keyword{datasets}
 

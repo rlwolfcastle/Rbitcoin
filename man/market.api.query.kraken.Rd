@@ -2,8 +2,8 @@
 \alias{market.api.query.kraken}
 \title{Send request to kraken market API}
 \usage{
-market.api.query.kraken(url, key, secret, req = list(), ssl.verify = FALSE,
-  curl.verbose = FALSE, debug = 0)
+market.api.query.kraken(url, key, secret, req = list(),
+  verbose = getOption("Rbitcoin.verbose"))
 }
 \arguments{
   \item{url}{character with url on which query needs to be
@@ -17,14 +17,11 @@ market.api.query.kraken(url, key, secret, req = list(), ssl.verify = FALSE,
   \item{req}{list of object passed to API: price and amount
   of opening order, id of cancelling order, etc.}
 
-  \item{ssl.verify}{logical flag to use HTTP over SSL.}
-
-  \item{curl.verbose}{logical flag to display RCurl debug
-  messages.}
-
-  \item{debug}{integer. Rbitcoin debug messages if
-  \code{debug > 0}, each subfunction reduce \code{debug} by
-  1.}
+  \item{verbose}{integer. Rbitcoin processing messages,
+  print to console if \code{verbose > 0}, each subfunction
+  reduce \code{verbose} by 1. If missing then
+  \code{getOption("Rbitcoin.verbose")} is used, by default
+  \code{0}.}
 }
 \value{
 R object created by fromJSON decoded result from market's
@@ -39,8 +36,7 @@ Send request to kraken market API.
 market.api.query.kraken(url = 'https://api.kraken.com/0/public/Ticker?pair=XBTCZEUR')
 # wallet
 market.api.query.kraken(url = 'https://api.kraken.com/0/private/Balance',
-                        key = '',
-                        secret = '')
+                        key = '', secret = '')
 }
 }
 \references{

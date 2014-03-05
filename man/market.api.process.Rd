@@ -3,16 +3,16 @@
 \title{Process market API}
 \usage{
 market.api.process(market, currency_pair, action, req = list(), ...,
-  ssl.verify = FALSE, debug = 0,
+  verbose = getOption("Rbitcoin.verbose"),
   on.market.error = expression(stop(e[["message"]], call. = FALSE)),
   on.error = expression(stop(e[["message"]], call. = FALSE)),
   api.dict = NULL, raw.query.res = FALSE)
 }
 \arguments{
-  \item{market}{character, example: \code{'mtgox'}.}
+  \item{market}{character, example: \code{'kraken'}.}
 
   \item{currency_pair}{character vector of length 2, ex.
-  \code{c(base = 'BTC', quote = 'USD')}. Order does
+  \code{c(base = 'BTC', quote = 'EUR')}. Order does
   matter.}
 
   \item{action}{character, defined process to get organized
@@ -25,15 +25,13 @@ market.api.process(market, currency_pair, action, req = list(), ...,
   \item{\dots}{objects to be passed to
   \code{\link{market.api.query}} \itemize{ \item auth
   params: \code{key}, \code{secret}, \code{client_id} (used
-  on bitstamp), \item technical param: \code{curl.verbose}.
-  }}
+  on bitstamp), }}
 
-  \item{ssl.verify}{logical default \code{FALSE}. For
-  details read \code{\link{market.api.query}}.}
-
-  \item{debug}{integer. Rbitcoin debug messages if
-  \code{debug > 0}, each subfunction reduce \code{debug} by
-  1.}
+  \item{verbose}{integer. Rbitcoin processing messages,
+  print to console if \code{verbose > 0}, each subfunction
+  reduce \code{verbose} by 1. If missing then
+  \code{getOption("Rbitcoin.verbose")} is used, by default
+  \code{0}.}
 
   \item{on.market.error}{expression to be evaluated on
   market level error. Rules specified in
@@ -48,7 +46,7 @@ market.api.process(market, currency_pair, action, req = list(), ...,
   Rbitcoin \code{\link{api.dict}}.}
 
   \item{raw.query.res}{logical skip post-processing are
-  return only after fromJSON processing.}
+  return results only after fromJSON processing.}
 }
 \value{
 Returned value depends on the \code{action} param. All
@@ -79,12 +77,20 @@ attributes and sub element \code{[['trades']]} as
 }
 \description{
 Processing of API call according to API dictionary
-\code{\link{api.dict}}. Pre processing of request and post
-processing of API call results to unified structure across
-markets. It will result truncation of most (not common
-across the markets) attributes returned. If you need the
-full set of data returned by market's API you should use
+\code{\link{api.dict}}. Limited to markets and currency
+processing defined in \code{api.dict}, use
+\code{\link{market.api.query}} for all currency pairs on
+all currently supported markets. This function perform pre
+processing of request and post processing of API call
+results to unified structure across markets. It will result
+truncation of most (not common across the markets)
+attributes returned. If you need the full set of data
+returned by market's API you should use
 \code{\link{market.api.query}}.
+}
+\details{
+To do not spam market's API, use \code{Sys.sleep(10)}
+between API calls.
 }
 \note{
 The api dictionary was not fully tested, please follow the
@@ -99,24 +105,31 @@ not all markets returns API call status information.
 \examples{
 \dontrun{
 # get ticker from market
-market.api.process(market = 'mtgox', currency_pair = c('BTC', 'USD'), action = 'ticker',
-                   debug = 10)
+market.api.process(market = 'kraken', currency_pair = c('BTC', 'EUR'), action='ticker')
 # get ticker from all markets and combine
 ticker_all <- rbindlist(list(
-  market.api.process(market = 'mtgox', currency_pair = c('BTC', 'USD'), action = 'ticker'),
-  market.api.process(market = 'bitstamp', currency_pair = c('BTC', 'USD'), action = 'ticker'),
-  market.api.process(market = 'btce', currency_pair = c('LTC', 'USD'), action = 'ticker'),
-  market.api.process(market = 'kraken', currency_pair = c('BTC', 'EUR'), action = 'ticker')
+  market.api.process(market = 'mtgox', currency_pair = c('BTC', 'USD'), action='ticker')
+  ,market.api.process(market = 'bitstamp', currency_pair = c('BTC', 'USD'), action='ticker')
+  ,market.api.process(market = 'btce', currency_pair = c('LTC', 'USD'), action='ticker')
+  ,{Sys.sleep(10);
+    market.api.process(market = 'btce', currency_pair = c('LTC', 'BTC'), action='ticker')}
+  ,{Sys.sleep(10);
+    market.api.process(market = 'btce', currency_pair = c('NMC', 'BTC'), action='ticker')}
+  ,market.api.process(market = 'kraken', currency_pair = c('BTC','EUR'), action='ticker')
+  ,{Sys.sleep(10);
+    market.api.process(market = 'kraken', currency_pair = c('LTC','EUR'), action='ticker')}
+  ,{Sys.sleep(10);
+    market.api.process(market = 'kraken', currency_pair = c('BTC','LTC'), action='ticker')}
 ))
 print(ticker_all)
 
 # get wallet from market
-market.api.process(market = 'mtgox', currency_pair = c('BTC', 'USD'), action = 'wallet',
-                   key = '', secret = '', debug = 10)
+market.api.process(market = 'kraken', currency_pair = c('BTC', 'EUR'), action = 'wallet',
+                   key = '', secret = '')
 # get wallet from all markets and combine
 wallet_all <- rbindlist(list(
-  market.api.process(market = 'mtgox', currency_pair = c('BTC', 'USD'), action = 'wallet',
-                     key = '', secret = ''),
+  #market.api.process(market = 'mtgox', currency_pair = c('BTC', 'USD'), action = 'wallet',
+  #                   key = '', secret = ''),
   market.api.process(market = 'bitstamp', currency_pair = c('BTC', 'USD'), action = 'wallet',
                      client_id = '', key = '', secret = ''),
   market.api.process(market = 'btce', currency_pair = c('LTC', 'USD'), action = 'wallet',
@@ -127,26 +140,23 @@ wallet_all <- rbindlist(list(
 print(wallet_all)
 
 # get order book from market
-market.api.process(market = 'mtgox', currency_pair = c('BTC', 'USD'), action = 'order_book',
-                   debug = 10)
+market.api.process(market = 'kraken', currency_pair = c('BTC', 'EUR'), action = 'order_book')
 
 # get open orders from market
-market.api.process(market = 'mtgox', currency_pair = c('BTC', 'USD'), action = 'open_orders',
-                   key = '', secret = '', debug = 10)
+market.api.process(market = 'kraken', currency_pair = c('BTC', 'EUR'), action = 'open_orders',
+                   key = '', secret = '')
 
 # place limit order
-market.api.process(market = 'mtgox', currency_pair = c('BTC', 'USD'), action = 'place_limit_order',
-                   req = list(type = 'buy', amount = 1, price = 800),
-                   key = '', secret = '', debug = 10)
+market.api.process(market = 'kraken', currency_pair = c('BTC', 'EUR'), action = 'place_limit_order',
+                   req = list(type = 'sell', amount = 1, price = 8000), # sell 1 btc for 8000 eur
+                   key = '', secret = '')
 
 # cancel order
-market.api.process(market = 'mtgox', currency_pair = c('BTC', 'USD'), action = 'cancel_order,
-                   req = list(oid = ''),
-                   key = '', secret = '', debug = 10)
-
+market.api.process(market = 'kraken', currency_pair = c('BTC', 'EUR'), action = 'cancel_order,
+                   req = list(oid = 'oid_from_open_orders'),
+                   key = '', secret = '')
 # get trades
-market.api.process(market = 'mtgox', currency_pair = c('BTC', 'USD'), action = 'trades',
-                   debug = 10)
+market.api.process(market = 'kraken', currency_pair = c('BTC', 'EUR'), action = 'trades')
 }
 }
 \seealso{
